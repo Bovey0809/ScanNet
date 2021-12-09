@@ -58,7 +58,7 @@ def computeStatistics(json, allLabels=None, allCategories=None):
     for segGroup in segGroups:
         segments = segGroup.get('segments')
         label = segGroup.get('label')
-        if label != 'unknown' and label != '':
+        if label not in ['unknown', '']:
             annSegs.update(segments)
             labels.update({segGroup.get('label'): 1})
             labeledObjectIds.update({segGroup.get('objectId'): 1})
@@ -205,7 +205,7 @@ def processDir(args):
     if categoriesFile is not None:
         with open(categoriesFile, 'wb') as categoriesOut:
             saveCounts(allCategories, categoriesOut)
-    if len(allStats) > 0:
+    if allStats:
         if args.get('output'):
             with open(args.get('output'), 'wb') as outfile:
                 saveOutput(args.get('format'), allStats, outfile)
@@ -241,7 +241,7 @@ def processFile(args):
                     traceback.print_exc()
             else:
                 log.warn('No segmentation file for ' + name)
-    if len(allStats) > 0:
+    if allStats:
         if args.get('output'):
             with open(args.get('output'), 'wb') as outfile:
                 saveOutput(args.get('format'), allStats, outfile)

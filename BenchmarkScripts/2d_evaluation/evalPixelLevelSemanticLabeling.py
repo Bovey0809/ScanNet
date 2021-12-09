@@ -89,17 +89,16 @@ def generateMatrix():
 
 # Get absolute or normalized value from field in confusion matrix.
 def getMatrixFieldValue(confMatrix, i, j, normalized=True):
-    if normalized:
-        rowSum = confMatrix[i].sum()
-        if (rowSum == 0):
-            return float('nan')
-        return float(confMatrix[i][j]) / rowSum
-    else:
+    if not normalized:
         return confMatrix[i][j]
+    rowSum = confMatrix[i].sum()
+    if (rowSum == 0):
+        return float('nan')
+    return float(confMatrix[i][j]) / rowSum
 
 # Calculate and return IOU score for a particular label
 def getIouScoreForLabel(label, confMatrix):
-    if not label in VALID_CLASS_IDS:
+    if label not in VALID_CLASS_IDS:
         return float('nan')
 
     # the number of true positive pixels for this label
@@ -115,7 +114,7 @@ def getIouScoreForLabel(label, confMatrix):
     # Only pixels that are not on a pixel with ground truth label that is ignored
     # The column sum of the corresponding column in the confusion matrix
     # without the ignored rows and without the actual label of interest
-    notIgnored = [l for l in VALID_CLASS_IDS if not l==label]
+    notIgnored = [l for l in VALID_CLASS_IDS if l != label]
     fp = np.longlong(confMatrix[notIgnored,label].sum())
 
     # the denominator of the IOU score

@@ -78,11 +78,12 @@ def convert2panoptic(scannetPath, outputFolder=None):
 
     images = []
     annotations = []
+    isCrowd = 0
     for progress, f in enumerate(files):
 
         originalFormat = np.array(Image.open(f))
-        
-        parts = splitall(f)        
+
+        parts = splitall(f)
         fileName = parts[-1]
         sceneName = parts[-3]
         outputFileName = "{}__{}".format(sceneName, fileName)
@@ -100,11 +101,7 @@ def convert2panoptic(scannetPath, outputFolder=None):
         segmentIds = np.unique(originalFormat)
         segmInfo = []
         for segmentId in segmentIds:
-            isCrowd = 0
-            if segmentId < 1000:
-                semanticId = segmentId
-            else:
-                semanticId = segmentId // 1000
+            semanticId = segmentId if segmentId < 1000 else segmentId // 1000
             if semanticId not in EVAL_LABELS:
                 continue
 

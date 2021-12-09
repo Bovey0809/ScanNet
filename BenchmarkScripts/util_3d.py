@@ -103,13 +103,13 @@ class Instance(object):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def to_dict(self):
-        dict = {}
-        dict["instance_id"] = self.instance_id
-        dict["label_id"]    = self.label_id
-        dict["vert_count"]  = self.vert_count
-        dict["med_dist"]    = self.med_dist
-        dict["dist_conf"]   = self.dist_conf
-        return dict
+        return {
+            'instance_id': self.instance_id,
+            'label_id': self.label_id,
+            'vert_count': self.vert_count,
+            'med_dist': self.med_dist,
+            'dist_conf': self.dist_conf,
+        }
 
     def from_json(self, data):
         self.instance_id     = int(data["instance_id"])
@@ -138,17 +138,13 @@ def read_instance_prediction_file(filename, pred_path):
         if os.path.commonprefix([mask_file, abs_pred_path]) != abs_pred_path:
             util.print_error('predicted mask {} in prediction text file {} points outside of prediction path.'.format(mask_file,filename))
 
-        info            = {}
-        info["label_id"] = int(float(parts[1]))
-        info["conf"]    = float(parts[2])
+        info = {'label_id': int(float(parts[1])), 'conf': float(parts[2])}
         instance_info[mask_file]  = info
     return instance_info
 
 
 def get_instances(ids, class_ids, class_labels, id2label):
-    instances = {}
-    for label in class_labels:
-        instances[label] = []
+    instances = {label: [] for label in class_labels}
     instance_ids = np.unique(ids)
     for id in instance_ids:
         if id == 0:

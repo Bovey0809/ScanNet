@@ -27,13 +27,13 @@ class Instance(object):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def toDict(self):
-        buildDict = {}
-        buildDict["instID"]     = self.instID
-        buildDict["labelID"]    = self.labelID
-        buildDict["pixelCount"] = self.pixelCount
-        buildDict["medDist"]    = self.medDist
-        buildDict["distConf"]   = self.distConf
-        return buildDict
+        return {
+            'instID': self.instID,
+            'labelID': self.labelID,
+            'pixelCount': self.pixelCount,
+            'medDist': self.medDist,
+            'distConf': self.distConf,
+        }
 
     def fromJSON(self, data):
         self.instID     = int(data["instID"])

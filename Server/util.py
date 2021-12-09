@@ -55,7 +55,7 @@ def call(cmd, log, rundir='', env=None, desc=None, testMode=None):
 
 
 def is_non_zero_file(fpath):
-    return True if os.path.isfile(fpath) and os.path.getsize(fpath) > 0 else False
+    return bool(os.path.isfile(fpath) and os.path.getsize(fpath) > 0)
 
 
 def ensure_dir_exists(path):
@@ -113,21 +113,21 @@ def lastModified(fileinfos):
     # Get the last modifiedAt string
     last = None
     for fileinfo in fileinfos:
-        if last == None or fileinfo.get('modifiedAtMillis') > last.get('modifiedAtMillis'):
+        if last is None or fileinfo.get('modifiedAtMillis') > last.get(
+            'modifiedAtMillis'
+        ):
             last = fileinfo
     return last
 
 
 def millisToIso(millis):
-    # Return timestamp in ISO 8601
-    mtimestr = datetime.datetime.fromtimestamp(millis/1000.0).strftime('%Y-%m-%dT%H:%M:%S')
-    return mtimestr
+    return datetime.datetime.fromtimestamp(millis / 1000.0).strftime(
+        '%Y-%m-%dT%H:%M:%S'
+    )
 
 
 def secsToIso(secs):
-    # Return timestamp in ISO 8601
-    mtimestr = datetime.datetime.fromtimestamp(secs).strftime('%Y-%m-%dT%H:%M:%S')
-    return mtimestr
+    return datetime.datetime.fromtimestamp(secs).strftime('%Y-%m-%dT%H:%M:%S')
 
 
 def checkLastModifiedNewer(dirname, timestamp):
@@ -191,8 +191,7 @@ def make_tree(base_dir, path):
 
 # Return 200 OK message
 def ret_ok(message = 'ok'):
-    rv = {}
-    rv['message'] = message
+    rv = {'message': message}
     ok_resp = jsonify(rv)
     ok_resp.status_code = 200
     return ok_resp
@@ -206,9 +205,7 @@ class Error(Exception):
         self.status_code = status_code
 
     def to_dict(self):
-        rv = {}
-        rv['message'] = self.message
-        return rv
+        return {'message': self.message}
 
     def to_json(self):
         return jsonify(self.to_dict())

@@ -112,10 +112,7 @@ def receive_file(request, filename, output=None):
         range_str = request.headers['Content-Range']
         start_bytes = int(range_str.split(' ')[1].split('-')[0])
         log.exception('Receiving %s: PARTIAL FILE RECEIVED: %s', filename, range_str)
-    if not content_length:
-        content_length = 0
-    else:
-        content_length = int(content_length)
+    content_length = 0 if not content_length else int(content_length)
     content_read = 0
     chunk_size = 4096*4
     stream = request.environ['wsgi.input']

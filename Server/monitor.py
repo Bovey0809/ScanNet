@@ -85,28 +85,25 @@ def index_scan(dirname):
             'stages': app.config['stages'],
             'includeAll': True
         })
-        if indexed:
-            res = post(WEBUI + '/scans/populate?group=staging&replace=true', indexed.values(), log)
-            if res.get('status') == 'ok':
-                return res.get('response')
-            else:
-                resp = jsonify({"message": res.message})
-                resp.status_code = 500
-                return resp
-        else:
+        if not indexed:
             return 'Nothing to index'
+        res = post(WEBUI + '/scans/populate?group=staging&replace=true', indexed.values(), log)
+        if res.get('status') == 'ok':
+            return res.get('response')
+        resp = jsonify({"message": res.message})
+        resp.status_code = 500
+        return resp
 
 
 @app.route('/index')
 def index_all():
     with INDEX_LOCK:
         ret = util.call(CMD_ARGS + [INDEX_ALL_BIN], log, desc='index_all')
-        if ret < 0:
-            resp = jsonify({"message": 'Error indexing all scans'})
-            resp.status_code = 500
-            return resp
-        else:
+        if ret >= 0:
             return 'done'
+        resp = jsonify({"message": 'Error indexing all scans'})
+        resp.status_code = 500
+        return resp
 
 
 # Converts the h264 to mp4 and thumbnails
@@ -119,12 +116,11 @@ def convert_video(dirname):
     with CONVERT_VIDEO_LOCK:
         ret1 = util.call(CMD_ARGS + [CONVERT_H264_TO_MP4_BIN, '--skip-done', path], log, desc='h264-to-mp4')
         ret2 = util.call(CMD_ARGS + [CONVERT_H264_TO_THUMBNAIL_BIN, '--skip-done', path], log, desc='h264-thumbnail')
-        if ret1 < 0 or ret2 < 0:
-            resp = jsonify({"message": 'Error converting h264 to mp4/thumbnail'})
-            resp.status_code = 500
-            return resp
-        else:
+        if ret1 >= 0 and ret2 >= 0:
             return 'done'
+        resp = jsonify({"message": 'Error converting h264 to mp4/thumbnail'})
+        resp.status_code = 500
+        return resp
 
 
 @app.route('/health')

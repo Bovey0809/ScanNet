@@ -31,7 +31,7 @@ def represents_int(s):
 
 def read_label_mapping(filename, label_from='raw_category', label_to='nyu40id'):
     assert os.path.isfile(filename)
-    mapping = dict()
+    mapping = {}
     with open(filename) as csvfile:
         reader = csv.DictReader(csvfile, delimiter='\t')
         for row in reader:
@@ -45,14 +45,13 @@ def read_label_mapping(filename, label_from='raw_category', label_to='nyu40id'):
 # input: scene_types.txt or scene_types_all.txt
 def read_scene_types_mapping(filename, remove_spaces=True):
     assert os.path.isfile(filename)
-    mapping = dict()
+    mapping = {}
     lines = open(filename).read().splitlines()
     lines = [line.split('\t') for line in lines]
     if remove_spaces:
-        mapping = { x[1].strip():int(x[0]) for x in lines }
+        return { x[1].strip():int(x[0]) for x in lines }
     else:
-        mapping = { x[1]:int(x[0]) for x in lines }        
-    return mapping
+        return { x[1]:int(x[0]) for x in lines }
 
 
 # color by label
@@ -73,7 +72,7 @@ def visualize_instance_image(filename, image):
     vis_image = np.zeros([height, width, 3], dtype=np.uint8)
     color_palette = create_color_palette()
     instances = np.unique(image)
-    for idx, inst in enumerate(instances):
+    for inst in instances:
         vis_image[image==inst] = color_palette[inst%len(color_palette)]
     imageio.imwrite(filename, vis_image)
 
