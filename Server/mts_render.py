@@ -25,7 +25,7 @@ def render(args):
     # Start up the scheduling system
     scheduler = Scheduler.getInstance()
     queue = RenderQueue()
-    for i in range(0, multiprocessing.cpu_count()):
+    for i in range(multiprocessing.cpu_count()):
         scheduler.registerWorker(LocalWorker(i, 'wrk%i' % i))
     scheduler.start()
 

@@ -132,9 +132,11 @@ def readPredInfo(predInfoFileName):
             if os.path.commonprefix( [filename,abs_pred_path] ) != abs_pred_path:
                 printError( "Predicted mask {} in prediction text file {} points outside of prediction path.".format(filename,predInfoFileName), user_fault=True )
 
-            imageInfo            = {}
-            imageInfo["labelID"] = int(float(splittedLine[1]))
-            imageInfo["conf"]    = float(splittedLine[2])
+            imageInfo = {
+                'labelID': int(float(splittedLine[1])),
+                'conf': float(splittedLine[2]),
+            }
+
             predInfo[filename]   = imageInfo
 
     return predInfo
@@ -161,12 +163,11 @@ def getGtInstances(groundTruthList):
 
 # Filter instances, ignore labels without instances
 def filterGtInstances(singleImageInstances):
-    instanceDict = {}
-    for labelName in singleImageInstances:
-        if not labelName in CLASS_LABELS:
-            continue
-        instanceDict[labelName] = singleImageInstances[labelName]
-    return instanceDict
+    return {
+        labelName: singleImageInstances[labelName]
+        for labelName in singleImageInstances
+        if labelName in CLASS_LABELS
+    }
 
 # match ground truth instances with predicted instances
 def matchGtWithPreds(predictionList,groundTruthList,gtInstances):
@@ -203,16 +204,12 @@ def matchGtWithPreds(predictionList,groundTruthList,gtInstances):
 
 # For a given frame, assign all predicted instances to ground truth instances
 def assignGt2Preds(gtInstancesOrig, gtImage, predInfo):
+    predInstCount    = 0
+
     # In this method, we create two lists
     #  - predInstances: contains all predictions and their associated gt
     #  - gtInstances:   contains all gt instances and their associated predictions
-    predInstances    = {}
-    predInstCount    = 0
-
-    # Create a prediction array for each class
-    for label in CLASS_LABELS:
-        predInstances[label] = []
-
+    predInstances = {label: [] for label in CLASS_LABELS}
     # We already know about the gt instances
     # Add the matching information array
     gtInstances = deepcopy(gtInstancesOrig)
@@ -224,9 +221,7 @@ def assignGt2Preds(gtInstancesOrig, gtImage, predInfo):
     gtNp = np.array(gtImage)
 
     # Get a mask of void labels in the groundtruth
-    voidLabelIDList = []
-    for labelid in VALID_CLASS_IDS:
-        voidLabelIDList.append(labelid)
+    voidLabelIDList = list(VALID_CLASS_IDS)
     boolVoid = np.in1d(gtNp, voidLabelIDList).reshape(gtNp.shape)
 
     # Loop through all prediction masks
@@ -236,7 +231,7 @@ def assignGt2Preds(gtInstancesOrig, gtImage, predInfo):
         predConf = predInfo[predImageFile]["conf"]
 
         # maybe we are not interested in that label
-        if not int(labelID) in ID2LABEL:
+        if int(labelID) not in ID2LABEL:
             continue
 
         # label name
@@ -256,14 +251,16 @@ def assignGt2Preds(gtInstancesOrig, gtImage, predInfo):
             continue
 
         # The information we want to collect for this instance
-        predInstance = {}
-        predInstance["imgName"]          = predImageFile
-        predInstance["predID"]           = predInstCount
-        predInstance["labelID"]          = int(labelID)
-        predInstance["pixelCount"]       = predPixelCount
-        predInstance["confidence"]       = predConf
-        # Determine the number of pixels overlapping void
-        predInstance["voidIntersection"] = np.count_nonzero( np.logical_and(boolVoid, boolPredInst) )
+        predInstance = {
+            'imgName': predImageFile,
+            'predID': predInstCount,
+            'labelID': int(labelID),
+            'pixelCount': predPixelCount,
+            'confidence': predConf,
+            'voidIntersection': np.count_nonzero(
+                np.logical_and(boolVoid, boolPredInst)
+            ),
+        }
 
         # A list of all overlapping ground truth instances
         matchedGt = []
@@ -502,8 +499,7 @@ def computeAverages(aps):
     d100m = np.where( np.isclose( opt.distanceThs , 100. ) )
     o50   = np.where(np.isclose(opt.overlaps,0.5  ))
 
-    avgDict = {}
-    avgDict["allAp"]       = np.nanmean(aps[ dInf,:,:  ])
+    avgDict = {'allAp': np.nanmean(aps[ dInf,:,:  ])}
     avgDict["allAp50%"]    = np.nanmean(aps[ dInf,:,o50])
 
     avgDict["classes"]  = {}
@@ -553,9 +549,7 @@ def printResults(avgDict):
     print ""
 
 def prepareJSONDataForResults(avgDict, aps):
-    JSONData = {}
-    JSONData["averages"] = avgDict
-    JSONData["overlaps"] = opt.overlaps.tolist()
+    JSONData = {'averages': avgDict, 'overlaps': opt.overlaps.tolist()}
     JSONData["minRegionSizes"]      = opt.minRegionSizes.tolist()
     JSONData["distanceThresholds"]  = opt.distanceThs.tolist()
     JSONData["minStereoDensities"]  = opt.distanceConfs.tolist()

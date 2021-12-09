@@ -10,7 +10,6 @@ from PIL import Image
 import numpy as np
 
 def instances2dict(imageFileList, class_labels, class_ids, verbose=False):
-    imgCount     = 0
     instanceDict = {}
     label2id = {}
     id2label = {}
@@ -24,7 +23,7 @@ def instances2dict(imageFileList, class_labels, class_ids, verbose=False):
     if verbose:
         print("Processing {} images...".format(len(imageFileList)))
 
-    for imageFileName in imageFileList:
+    for imgCount, imageFileName in enumerate(imageFileList, start=1):
         # Load image
         img = Image.open(imageFileName)
 
@@ -32,10 +31,7 @@ def instances2dict(imageFileList, class_labels, class_ids, verbose=False):
         imgNp = np.array(img)
 
         # Initialize label categories
-        instances = {}
-        for label in class_labels:
-            instances[label] = []
-
+        instances = {label: [] for label in class_labels}
         # Loop through all instance ids in instance image
         for instanceId in np.unique(imgNp):
             instanceObj = Instance(imgNp, instanceId)
@@ -44,8 +40,6 @@ def instances2dict(imageFileList, class_labels, class_ids, verbose=False):
 
         imgKey = os.path.abspath(imageFileName)
         instanceDict[imgKey] = instances
-        imgCount += 1
-
         if verbose:
             print("\rImages Processed: {}".format(imgCount), end=' ')
             sys.stdout.flush()

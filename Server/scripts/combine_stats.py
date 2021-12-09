@@ -19,9 +19,7 @@ log.setLevel(logging.INFO)
 def loadJson(infile):
     rows = json.load(infile)
     if type(rows) is list:
-        byId = {}
-        for row in rows:
-            byId[row['id']] = row
+        byId = {row['id']: row for row in rows}
         rows = byId
     fieldnames = set()
     for id, row in rows.iteritems():
@@ -35,9 +33,7 @@ def saveJson(data, out):
 
 def loadCsv(infile):
     reader = csv.DictReader(infile)
-    rows = {}
-    for row in reader:
-        rows[row['id']] = row
+    rows = {row['id']: row for row in reader}
     return {'fieldnames': list(reader.fieldnames), 'rows': rows}
 
 

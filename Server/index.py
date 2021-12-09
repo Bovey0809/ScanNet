@@ -42,9 +42,7 @@ def index_all_recursive(dirname, writer, args):
 
 def index_all(dirname, writer, args):
     entries = glob(dirname + '/*/')
-    indexed = 0
-    for dir in entries:
-        indexed += index_single(dir, dir, writer, args)
+    indexed = sum(index_single(dir, dir, writer, args) for dir in entries)
     log.info('Indexed ' + str(indexed) + ' scans')
 
 
@@ -63,18 +61,13 @@ def index_single(dirname, subdir, writer, args):
 def convert_data(data, meta):
     output = None
     if isinstance(data, dict):
-        output = {}
-        for key, value in data.iteritems():
-            output[key] = convert_data(value, meta)
+        return {key: convert_data(value, meta) for key, value in data.iteritems()}
     elif isinstance(data, list):
-        output = []
-        for value in data:
-            output.append(convert_data(value, meta))
+        return [convert_data(value, meta) for value in data]
     elif isinstance(data, basestring):
-        output = data.replace('${id}', meta['id'])
+        return data.replace('${id}', meta['id'])
     else:
-        output = data
-    return output
+        return data
 
 
 def has_scan(dirname):
@@ -82,10 +75,9 @@ def has_scan(dirname):
     id = os.path.basename(dirname)
     # If any of these files exists, this directory is likely to be a scan
     files = [id + '.imu', id + '.depth', id + '.h264', id + '.sens', id + '.ply']
-    for file in files:
-        if util.is_non_zero_file(os.path.join(dirname, file)):
-            return True
-    return False
+    return any(
+        util.is_non_zero_file(os.path.join(dirname, file)) for file in files
+    )
 
 
 def check_files(filesByName, files, checkAny=False):
@@ -104,7 +96,7 @@ def check_stages(stages_data, meta, times=None):
     converted = convert_data(stages_data, meta)
     stages = converted.get('stages')
     if meta.get('files'):
-        filesByName = dict((f.get('name'), f) for f in meta.get('files'))
+        filesByName = {f.get('name'): f for f in meta.get('files')}
         stageStatuses = []
         lastAllOk = ''
         failed = False
@@ -135,16 +127,15 @@ def check_stages(stages_data, meta, times=None):
             if ok is None:
                 if inputOk and not stage.get('optional'):
                     ok = False
-            else:
-                if inputOk:
-                    # Check if output is out of date
-                    inputs = [filesByName.get(name) for name in stage.get('input')]
-                    inputs = [f for f in inputs if f is not None]
-                    lastModifiedInput = util.lastModified(inputs)
-                    lastModifiedMillis = lastModifiedInput.get('modifiedAtMillis')
-                    outputs = [filesByName.get(name) for name in stage.get('output')]
-                    outputs = [f for f in outputs if f is not None]
-                    outdated = any(f.get('modifiedAtMillis') < lastModifiedMillis for f in outputs)
+            elif inputOk:
+                # Check if output is out of date
+                inputs = [filesByName.get(name) for name in stage.get('input')]
+                inputs = [f for f in inputs if f is not None]
+                lastModifiedInput = util.lastModified(inputs)
+                lastModifiedMillis = lastModifiedInput.get('modifiedAtMillis')
+                outputs = [filesByName.get(name) for name in stage.get('output')]
+                outputs = [f for f in outputs if f is not None]
+                outdated = any(f.get('modifiedAtMillis') < lastModifiedMillis for f in outputs)
 
             status = {'name': stage.get('name')}
             if timeRec is not None:
@@ -155,10 +146,11 @@ def check_stages(stages_data, meta, times=None):
             if ok is not None:
                 status['ok'] = ok
             stageStatuses.append(status)
-            if not failed:
-                if ok:
+            if ok:
+                if not failed:
                     lastAllOk = stage.get('name')
-                elif not stage.get('optional'):
+            elif not stage.get('optional'):
+                if not failed:
                     failed = True
         meta['stages'] = stageStatuses
         meta['lastOkStage'] = lastAllOk
@@ -183,12 +175,10 @@ def extract_meta(dirname, subdir, args):
     processed = None
     if util.is_non_zero_file(processedFile):
         processed = util.read_properties(processedFile, log)
-        if not processed:
-            if not args.get('includeAll'):
-                return False  # NOT ACCEPTABLE
-    else:
-        if not args.get('includeAll'):
+        if not processed and not args.get('includeAll'):
             return False  # NOT ACCEPTABLE
+    elif not args.get('includeAll'):
+        return False  # NOT ACCEPTABLE
 
     # Process log
     times = None
@@ -218,7 +208,16 @@ def extract_meta(dirname, subdir, args):
     if date_match:
         createdAt = date_match.group(0)
         # Reformat to be in ISO8601 format
-        meta1['createdAt'] = createdAt[0:10] + 'T' + createdAt[11:13] + ':' + createdAt[14:16] + ':' + createdAt[17:19]
+        meta1['createdAt'] = (
+            createdAt[:10]
+            + 'T'
+            + createdAt[11:13]
+            + ':'
+            + createdAt[14:16]
+            + ':'
+            + createdAt[17:19]
+        )
+
 
     # Look for dirname/id.txt and extract fields into our meta
     # if there is txt file, read it and append to metadata record
@@ -267,7 +266,7 @@ def extract_meta(dirname, subdir, args):
 
     if source == 'nyuv2' and not meta.get('sceneType'):
         idParts = meta.get('id').split('_')
-        meta['sceneType'] = '_'.join(idParts[0:len(idParts-1)])
+        meta['sceneType'] = '_'.join(idParts[:len(idParts-1)])
 
     if meta.get('sceneLabel'):
         # Derive sceneName from sceneLabel
@@ -288,10 +287,7 @@ def saveJson(data, out):
 
 def loadCsv(infile):
     reader = csv.DictReader(infile)
-    rows = {}
-    for row in reader:
-        rows[row['id']] = row
-    return rows
+    return {row['id']: row for row in reader}
 
 
 def saveCsv(data, csvfile):

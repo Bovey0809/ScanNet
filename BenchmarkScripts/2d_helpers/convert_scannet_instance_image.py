@@ -58,10 +58,9 @@ def make_instance_image(label_image, instance_image):
         label = label_image[instance_image==inst][0]
         if label in label_instance_counts:
             inst_count = label_instance_counts[label] + 1
-            label_instance_counts[label] = inst_count
         else:
             inst_count = 1
-            label_instance_counts[label] = inst_count
+        label_instance_counts[label] = inst_count
         # oldinst2labelinst[inst] = (label, inst_count)
         output[instance_image==inst] = label * 1000 + inst_count
     return output

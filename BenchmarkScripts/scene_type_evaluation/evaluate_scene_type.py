@@ -46,14 +46,14 @@ UNKNOWN_ID = np.max(VALID_CLASS_IDS + 1)
 
 
 def get_iou(label_id, confusion):
-    if not label_id in VALID_CLASS_IDS:
+    if label_id not in VALID_CLASS_IDS:
         return float('nan')
     # #true positives
     tp = np.longlong(confusion[label_id, label_id])
     # #false negatives
     fn = np.longlong(confusion[label_id, :].sum()) - tp
     # #false positives
-    not_ignored = [l for l in VALID_CLASS_IDS if not l == label_id]
+    not_ignored = [l for l in VALID_CLASS_IDS if l != label_id]
     fp = np.longlong(confusion[not_ignored, label_id].sum())
 
     denom = (tp + fp + fn)
@@ -63,7 +63,7 @@ def get_iou(label_id, confusion):
 
 
 def get_acc(label_id, confusion):
-    if not label_id in VALID_CLASS_IDS:
+    if label_id not in VALID_CLASS_IDS:
         return float('nan')
     # #true positives
     tp = np.longlong(confusion[label_id, label_id])

@@ -227,9 +227,7 @@ def compute_averages(aps):
     o50   = np.where(np.isclose(opt.overlaps,0.5))
     o25   = np.where(np.isclose(opt.overlaps,0.25))
     oAllBut25  = np.where(np.logical_not(np.isclose(opt.overlaps,0.25)))
-    avg_dict = {}
-    #avg_dict['all_ap']     = np.nanmean(aps[ d_inf,:,:  ])
-    avg_dict['all_ap']     = np.nanmean(aps[ d_inf,:,oAllBut25])
+    avg_dict = {'all_ap': np.nanmean(aps[ d_inf,:,oAllBut25])}
     avg_dict['all_ap_50%'] = np.nanmean(aps[ d_inf,:,o50])
     avg_dict['all_ap_25%'] = np.nanmean(aps[ d_inf,:,o25])
     avg_dict["classes"]  = {}
@@ -384,7 +382,7 @@ def evaluate(pred_files, gt_files, pred_path, output_file):
 def main():
     pred_files = [f for f in os.listdir(opt.pred_path) if f.endswith('.txt') and f != 'semantic_instance_evaluation.txt']
     gt_files = []
-    if len(pred_files) == 0:
+    if not pred_files:
         util.print_error('No result files found.', user_fault=True)
     for i in range(len(pred_files)):
         gt_file = os.path.join(opt.gt_path, pred_files[i])

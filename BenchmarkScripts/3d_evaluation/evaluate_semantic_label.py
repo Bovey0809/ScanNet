@@ -66,14 +66,14 @@ def evaluate_scan(pred_file, gt_file, confusion):
 
 
 def get_iou(label_id, confusion):
-    if not label_id in VALID_CLASS_IDS:
+    if label_id not in VALID_CLASS_IDS:
         return float('nan')
     # #true positives
     tp = np.longlong(confusion[label_id, label_id])
     # #false negatives
     fn = np.longlong(confusion[label_id, :].sum()) - tp
     # #false positives
-    not_ignored = [l for l in VALID_CLASS_IDS if not l == label_id]
+    not_ignored = [l for l in VALID_CLASS_IDS if l != label_id]
     fp = np.longlong(confusion[not_ignored, label_id].sum())
 
     denom = (tp + fp + fn)
@@ -133,7 +133,7 @@ def evaluate(pred_files, gt_files, output_file):
 def main():
     pred_files = [f for f in os.listdir(opt.pred_path) if f.endswith('.txt') and f != 'semantic_label_evaluation.txt']
     gt_files = []
-    if len(pred_files) == 0:
+    if not pred_files:
         util.print_error('No result files found.', user_fault=True)
     for i in range(len(pred_files)):
         gt_file = os.path.join(opt.gt_path, pred_files[i])

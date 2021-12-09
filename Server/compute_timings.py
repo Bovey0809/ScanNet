@@ -23,22 +23,19 @@ log.setLevel(logging.INFO)
 
 
 def getTotal(times):
-    secs = 0
-    for k, r in times.iteritems():
-        secs += r.get('secs')
+    secs = sum(r.get('secs') for k, r in times.iteritems())
     return {'name': 'total', 'time': str(timedelta(seconds=secs)), 'secs': secs}
 
 
 def getRecord(times, name, n=None):
-    if n is not None:
-        secs = 0
-        for i in range(1, n+1):
-            r = times.get('%s%d' % (name, i))
-            if r is not None:
-                secs += r.get('secs')
-        return {'name': name, 'time': str(timedelta(seconds=secs)), 'secs': secs}
-    else:
+    if n is None:
         return times.get(name)
+    secs = 0
+    for i in range(1, n+1):
+        r = times.get('%s%d' % (name, i))
+        if r is not None:
+            secs += r.get('secs')
+    return {'name': name, 'time': str(timedelta(seconds=secs)), 'secs': secs}
 
 
 def computeTimings(input):
